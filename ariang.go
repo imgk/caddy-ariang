@@ -2,6 +2,7 @@ package ariang
 
 import (
 	"embed"
+	"errors"
 	"io/fs"
 	"net/http"
 	"path"
@@ -55,11 +56,37 @@ func (m *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyht
 
 // UnmarshalCaddyfile unmarshals Caddyfile tokens into h.
 func (h *Handler) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
+	if !d.Next() {
+		return d.ArgErr()
+	}
+	args := d.RemainingArgs()
+	if len(args) > 0 {
+		return d.ArgErr()
+	}
+	for nesting := d.Nesting(); d.NextBlock(nesting); {
+		subdirective := d.Val()
+		args := d.RemainingArgs()
+		switch subdirective {
+		case "prefix":
+			if len(args) != 1 {
+				return d.ArgErr()
+			}
+			if args[0] == "" {
+				return errors.New("empty prefix")
+			}
+			if h.Prefix != "" {
+				return errors.New("only one prefix is allowed")
+			}
+			h.Prefix = args[0]
+		}
+	}
 	return nil
 }
 
 func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
-	return &Handler{}, nil
+	m := &Handler{}
+	err := m.UnmarshalCaddyfile(h.Dispenser)
+	return m, err
 }
 
 // Interface guards
