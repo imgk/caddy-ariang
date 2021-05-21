@@ -25,7 +25,9 @@ var www embed.FS
 
 // Handler implements an HTTP handler that ...
 type Handler struct {
-	http.Handler
+	Prefix string `json:"prefix,omitempty"`
+
+	Handler http.Handler
 }
 
 // CaddyModule returns the Caddy module information.
@@ -39,6 +41,9 @@ func (Handler) CaddyModule() caddy.ModuleInfo {
 // Provision implements caddy.Provisioner.
 func (m *Handler) Provision(ctx caddy.Context) error {
 	m.Handler = http.FileServer(http.FS(FS(www)))
+	if m.Prefix != "" {
+		m.Handler = http.StripPrefix(m.Prefix, m.Handler)
+	}
 	return nil
 }
 
