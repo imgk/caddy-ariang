@@ -38,7 +38,7 @@ func (Handler) CaddyModule() caddy.ModuleInfo {
 
 // Provision implements caddy.Provisioner.
 func (m *Handler) Provision(ctx caddy.Context) error {
-	m.Handler = http.FileServer(http.FS(&FS{FS: www}))
+	m.Handler = http.FileServer(http.FS(FS(www)))
 	return nil
 }
 
@@ -65,11 +65,9 @@ var (
 )
 
 // FS is ...
-type FS struct {
-	embed.FS
-}
+type FS embed.FS
 
 // Open is ...
-func (r *FS) Open(name string) (fs.File, error) {
-	return r.FS.Open(filepath.Join("www", filepath.FromSlash(path.Clean("/"+name))))
+func (fs FS) Open(name string) (fs.File, error) {
+	return embed.FS(fs).Open(filepath.Join("www", filepath.FromSlash(path.Clean("/"+name))))
 }
