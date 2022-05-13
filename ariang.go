@@ -20,7 +20,7 @@ func init() {
 }
 
 // content holds our static web server content.
-// AriaNg 1.2.1
+// AriaNg 1.2.3
 //go:embed www/*
 var www embed.FS
 
